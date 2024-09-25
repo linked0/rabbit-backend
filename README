@@ -1,1 +1,16 @@
 # Rabbit backend server
+
+## Setup
+```
+yarn
+```
+
+## Run dev server
+```
+cp .env.sample .env
+```
+`.env`의 mongodb+srv 항목에 MongoDB 암호 지정 (Miki-secret에 있음)
+```
+yarn dev
+```
+
