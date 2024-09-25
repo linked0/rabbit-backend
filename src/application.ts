@@ -44,6 +44,7 @@ export default class Application {
         optionsSuccessStatus: 200
       }
     ))
+    this.expressApp.use(bodyParser.urlencoded({ extended: true }));
     this.expressApp.use(bodyParser.json());
 
     this.expressApp.get('/', (_req, res) => res.send('Hello, World!'));

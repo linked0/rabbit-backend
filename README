@@ -14,3 +14,66 @@ cp .env.sample .env
 yarn dev
 ```
 
+## Test with Postman
+### Create a post
+url with `POST` in method, `raw` `JSON` in body
+```
+localhost:8000/api/article/new
+```
+
+body
+```
+{
+    "title": "New Disney",
+    "content": "New High"
+}
+```
+response
+```
+{
+    "title": "New Disney",
+    "content": "New High",
+    "comments": [],
+    "_id": "66f3c038221c32fbfdf26c60",
+    "__v": 0
+}
+```
+
+### Show a post
+- url with `GET` in method
+- `{{articleId}}`에 위 Post의 응답의 `_id` 값을 추가
+```
+localhost:8000/api/article/show/{{articleId}}
+```
+
+### Update a post
+- url with `POST` in method, `raw` `JSON` in body
+- `{{articleId}}`에 `_id` 값을 추가
+```
+localhost:8000/api/article/update/{{articleId}}
+```
+
+body
+```
+{
+    "title": "New Disney",
+    "content": "New Low"
+}
+```
+
+### 나머지 Reqeust
+- Postman History 참고.
+- delete는 `DELETE` method 사용
+```
+localhost:8000/api/article/delete/{{articleId}}
+```
+```
+localhost:8000/api/comment/new/{{articleId}}
+{
+    "userName": "Harris",
+    "content": "Go World"
+}
+```
+```
+localhost:8000/api/comment/{{commentId}}/delete/{{articleId}}
+```
