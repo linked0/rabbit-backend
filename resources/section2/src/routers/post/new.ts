@@ -24,6 +24,7 @@ router.post('/api/post/new', uploadImages, async (req: Request, res: Response, n
         return next(new BadRequestError('title and content are required!'))
     }
 
+    console.log('images :', images);
     const newPost = Post.build({
         title,
         content,

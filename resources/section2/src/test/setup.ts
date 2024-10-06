@@ -41,5 +41,9 @@ global.signin = async () => {
 
     const cookie = res.get('Set-Cookie')
 
+    if (!cookie) {
+        throw new Error('Cookie not found');  // You can handle it with an error or return []
+    }
+
     return cookie
 }

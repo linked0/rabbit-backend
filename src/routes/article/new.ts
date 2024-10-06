@@ -70,18 +70,6 @@ router.delete('/delete/:id', async (req:Request, res: Response, next: NextFuncti
   res.status(200).json( { success : true } );
 });
 
-router.get('/show/:id', async (req: Request, res: Response, next: NextFunction) => {
-  const { id } = req.params;
-
-  if(!id) {
-      const allPosts = await Article.find();
-      return res.status(200).send(allPosts)
-  }
-
-  const article = await Article.findOne({ _id: id });
-
-  res.status(200).json(article);
-})
 
 
 export { router as NewArticleRoute };
