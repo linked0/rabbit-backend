@@ -11,7 +11,7 @@ cp .env.sample .env
 ```
 `.env`의 mongodb+srv 항목에 MongoDB 암호 지정 (Miki-secret에 있음)
 ```
-yarn dev
+yarn start:dev
 ```
 
 ## Test with Postman
@@ -77,6 +77,27 @@ localhost:8000/api/comment/new/{{articleId}}
 ```
 localhost:8000/api/comment/{{commentId}}/delete/{{articleId}}
 ```
+
+### Create Actor
+- POST
+```
+localhost:8000/actor/new
+```
+
+body
+```
+{
+    "id": 3,
+    "name": "Peter"
+}
+```
+
+### Show Actor
+- GET
+```
+localhost:8000/actor/show/3
+```
+
 
 ## Etc
 - 원래 jest 관련 패키지는 devDependencies에 들어가야 하지만, 이 프로젝트에서는 테스트 코드를 작성하지 않았기 때문에 dependencies에 포함시켰습니다.
