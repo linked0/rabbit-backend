@@ -10,7 +10,7 @@ async function main() {
   console.log('NODE_DEV :', process.env.NODE_DEV);
   console.log('DEPLOY_TARGET :', process.env.DEPLOY_TARGET);
   console.log('POSTGRES_DB :', process.env.POSTGRES_DB);
-  console.log('JWT_SECRET :', process.env.JWT_SECRET);
+  console.log('JWT_KEY :', process.env.JWT_KEY);
   console.log('S3_REGION :', process.env.S3_REGION);
   console.log('SHAREDASSET_CONTRACT :', process.env.SHAREDASSET_CONTRACT);
   console.log('LAZY_MINT_ADAPTER :', process.env.LAZY_MINT_ADAPTER);

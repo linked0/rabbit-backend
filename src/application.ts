@@ -13,6 +13,8 @@ import { Connection,
   MikroORM,
   RequestContext, } from '@mikro-orm/core';
 import { AdminRoute } from './routes/admin';
+import { SignupRouter } from './routes/auth/signup';
+import { SigninRouter } from './routes/auth/signin';
 import { NewArticleRoute } from './routes/article/new';
 import { ShowArticleRouter } from './routes/article/show';
 import { NewCommentRoute } from './routes/comment/new';
@@ -28,6 +30,9 @@ import ActorResolver from './resolvers/actor.resolver';
 import { buildSchema } from 'type-graphql';
 import expressPlayground from 'graphql-playground-middleware-express';
 import ReqContext from './interfaces/ReqContext';
+
+import cookieSession = require('cookie-session');
+
 
 //For env File 
 dotenv.config();
@@ -67,6 +72,11 @@ export default class Application {
     if(!process.env.MONGO_URI) {
       throw new Error('MONGO_URI is not defined');
     }
+
+    if(!process.env.JWT_KEY) {
+      throw new Error('JWT_KEY is not defined');
+    } 
+    
     try { 
       mongoose.connect(process.env.MONGO_URI);
     } catch (error) {
@@ -104,16 +114,31 @@ export default class Application {
         optionsSuccessStatus: 200
       }
     ))
+    
+    // for signin, signup
+    this.expressApp.set('trust proxy', true);
+
     this.expressApp.use(bodyParser.urlencoded({ extended: true }));
     this.expressApp.use(bodyParser.json());
+    this.expressApp.use(cookieSession({
+      signed: false,
+      secure: false,
+    }));
 
     this.expressApp.get('/', (_req, res) => res.send('Hello, World!'));
 
+    // Routes for signup and signin
+    this.expressApp.use(SignupRouter);
+    this.expressApp.use(SigninRouter);
+
+    // Routes for article and comment
     this.expressApp.use("/admin", AdminRoute);
     this.expressApp.use("/api/article", NewArticleRoute);
     this.expressApp.use(ShowArticleRouter);
     this.expressApp.use(NewCommentRoute);
     this.expressApp.use(DeleteCommentRoute);
+
+    // Routes for actor
     this.expressApp.use('/actor', ActorController);
 
     if (process.env.NODE_ENV !== 'production') {

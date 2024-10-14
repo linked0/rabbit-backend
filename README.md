@@ -78,6 +78,29 @@ localhost:8000/api/comment/new/{{articleId}}
 localhost:8000/api/comment/{{commentId}}/delete/{{articleId}}
 ```
 
+### Signup & Signin
+- `POST`
+```
+localhost:8000/signup
+```
+```
+{
+    "email": "Jay",
+    "password": "Miles"
+}
+```
+
+- `POST`
+```
+localhost:8000/signin
+```
+```
+{
+    "email": "Jay",
+    "password": "Miles"
+}
+```
+
 ### Create Actor
 - POST
 ```
