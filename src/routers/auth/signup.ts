@@ -18,7 +18,7 @@ router.post('/signup', async (req: Request, res: Response, next: NextFunction) =
   await newUser.save();
 
   req.session = {
-    jwt: jwt.sign({ userId: newUser.id, email }, process.env.JWT_KEY!)
+    jwt: jwt.sign({ userId: newUser.id, email }, process.env.JWT_KEY!, {expiresIn: '10h'})
   }
 
   // create user

@@ -12,14 +12,19 @@ import { Connection,
   IDatabaseDriver,
   MikroORM,
   RequestContext, } from '@mikro-orm/core';
-import { AdminRoute } from './routes/admin';
-import { SignupRouter } from './routes/auth/signup';
-import { SigninRouter } from './routes/auth/signin';
-import { NewArticleRoute } from './routes/article/new';
-import { ShowArticleRouter } from './routes/article/show';
-import { NewCommentRoute } from './routes/comment/new';
-import { DeleteCommentRoute } from './routes/comment/delete';
-import { ActorController } from './routes/actor';
+import {
+  AdminRoute,
+  SignupRouter,
+  SigninRouter,
+  NewArticleRoute,
+  ShowArticleRouter,
+  NewCommentRoute,
+  DeleteCommentRoute,
+  ActorController,
+  CurrentUserRouter,
+  SignoutRouter
+} from './routers';
+
 import mongoose, { plugin } from 'mongoose';
 import cors from 'cors';
 import ormConfig from './orm.config';
@@ -30,6 +35,8 @@ import ActorResolver from './resolvers/actor.resolver';
 import { buildSchema } from 'type-graphql';
 import expressPlayground from 'graphql-playground-middleware-express';
 import ReqContext from './interfaces/ReqContext';
+
+import { currentUser, requireAuth } from '../common';
 
 import cookieSession = require('cookie-session');
 
@@ -125,18 +132,22 @@ export default class Application {
       secure: false,
     }));
 
+    this.expressApp.use(currentUser);
+
     this.expressApp.get('/', (_req, res) => res.send('Hello, World!'));
 
     // Routes for signup and signin
     this.expressApp.use(SignupRouter);
     this.expressApp.use(SigninRouter);
+    this.expressApp.use(CurrentUserRouter);
+    this.expressApp.use(SignoutRouter);
 
     // Routes for article and comment
     this.expressApp.use("/admin", AdminRoute);
-    this.expressApp.use("/api/article", NewArticleRoute);
+    this.expressApp.use("/api/article", requireAuth, NewArticleRoute);
     this.expressApp.use(ShowArticleRouter);
-    this.expressApp.use(NewCommentRoute);
-    this.expressApp.use(DeleteCommentRoute);
+    this.expressApp.use(requireAuth, NewCommentRoute);
+    this.expressApp.use(requireAuth, DeleteCommentRoute);
 
     // Routes for actor
     this.expressApp.use('/actor', ActorController);
@@ -179,7 +190,14 @@ export default class Application {
       error.status = 404;
       next(error);
     });
-    
+
+    this.expressApp.use((error: CustomError, _req: Request, res: Response, _next: NextFunction) => {
+      if(error.status) {
+        return res.status(error.status).json({ error: error.message });
+      }
+      res.status(error.status || 500).json({ error: error.message });
+    });
+
     this.expressApp.listen(port, () => {
       console.log(`Server is running at http://localhost:${port}`);
     });

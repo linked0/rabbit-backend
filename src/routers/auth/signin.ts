@@ -13,7 +13,7 @@ router.post('/signin', async (req: Request, res: Response, next: NextFunction) =
     const isEqual = await authenticationService.pwdCompare(user.password, password);
     if(!isEqual) return next(new Error('Wrong email or password'));
 
-    const token = jwt.sign({ userId: user.id, email }, process.env.JWT_KEY!);
+    const token = jwt.sign({ userId: user.id, email }, process.env.JWT_KEY!, {expiresIn: '10h'})
     req.session = { jwt: token };
 
     res.status(200).send(user);
