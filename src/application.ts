@@ -1,17 +1,19 @@
-import  express, { Request, Response, Router, NextFunction }  from 'express';
-import { graphqlHTTP } from 'express-graphql';
-import { createServer, Server } from 'http';
-import ws from 'ws';
-import { useServer } from 'graphql-ws/lib/use/ws';
-import bodyParser from 'body-parser';
-import dotenv from 'dotenv';
-import { ApolloServer } from 'apollo-server-express';
-import { Connection,
+import express, { Request, Response, Router, NextFunction } from "express";
+import { graphqlHTTP } from "express-graphql";
+import { createServer, Server } from "http";
+import ws from "ws";
+import { useServer } from "graphql-ws/lib/use/ws";
+import bodyParser from "body-parser";
+import dotenv from "dotenv";
+import { ApolloServer } from "apollo-server-express";
+import {
+  Connection,
   EntityManager,
   EntityRepository,
   IDatabaseDriver,
   MikroORM,
-  RequestContext, } from '@mikro-orm/core';
+  RequestContext,
+} from "@mikro-orm/core";
 import {
   AdminRoute,
   SignupRouter,
@@ -22,33 +24,31 @@ import {
   DeleteCommentRoute,
   ActorController,
   CurrentUserRouter,
-  SignoutRouter
-} from './routers';
+  SignoutRouter,
+} from "./routers";
 
-import mongoose, { plugin } from 'mongoose';
-import cors from 'cors';
-import ormConfig from './orm.config';
-import Actor from './entities/actor.entity';
-import { resolvers } from 'graphql-scalars';
-import { formatError, validate } from 'graphql';
-import ActorResolver from './resolvers/actor.resolver';
-import { buildSchema } from 'type-graphql';
-import expressPlayground from 'graphql-playground-middleware-express';
-import ReqContext from './interfaces/ReqContext';
+import mongoose, { plugin } from "mongoose";
+import cors from "cors";
+import ormConfig from "./orm.config";
+import Actor from "./entities/actor.entity";
+import { resolvers } from "graphql-scalars";
+import { formatError, validate } from "graphql";
+import ActorResolver from "./resolvers/actor.resolver";
+import { buildSchema } from "type-graphql";
+import expressPlayground from "graphql-playground-middleware-express";
+import ReqContext from "./interfaces/ReqContext";
 
-import { currentUser, requireAuth } from '../common';
+import {
+  currentUser,
+  NotFoundError,
+  requireAuth,
+  errorHandler,
+} from "../common";
 
-import cookieSession = require('cookie-session');
+import cookieSession = require("cookie-session");
 
-
-//For env File 
+//For env File
 dotenv.config();
-
-declare global {
-  interface CustomError extends Error {
-    status?: number;
-  }
-}
 
 // export const DI = {} as {
 //   orm: MikroORM;
@@ -76,19 +76,19 @@ export default class Application {
   public apolloServer!: ApolloServer;
 
   public connect = async (): Promise<void> => {
-    if(!process.env.MONGO_URI) {
-      throw new Error('MONGO_URI is not defined');
+    if (!process.env.MONGO_URI) {
+      throw new Error("MONGO_URI is not defined");
     }
 
-    if(!process.env.JWT_KEY) {
-      throw new Error('JWT_KEY is not defined');
-    } 
-    
-    try { 
+    if (!process.env.JWT_KEY) {
+      throw new Error("JWT_KEY is not defined");
+    }
+
+    try {
       mongoose.connect(process.env.MONGO_URI);
     } catch (error) {
-      console.log('Error while connecting to MongoDB  :', error);
-      throw new Error('Error while connecting to MongoDB');
+      console.log("Error while connecting to MongoDB  :", error);
+      throw new Error("Error while connecting to MongoDB");
     }
 
     // Initialize MikorORM
@@ -104,37 +104,38 @@ export default class Application {
       //   await migrator.up();
       // }
     } catch (error) {
-      console.error('📌 Could not connect to the database', error);
+      console.error("📌 Could not connect to the database", error);
       throw Error(String(error));
     }
-    
-  }
+  };
 
   public async init() {
     const port = process.env.PORT || 8000;
 
     this.expressApp = express();
-    
-    this.expressApp.use(cors(
-      {
+
+    this.expressApp.use(
+      cors({
         origin: "*",
-        optionsSuccessStatus: 200
-      }
-    ))
-    
+        optionsSuccessStatus: 200,
+      })
+    );
+
     // for signin, signup
-    this.expressApp.set('trust proxy', true);
+    this.expressApp.set("trust proxy", true);
 
     this.expressApp.use(bodyParser.urlencoded({ extended: true }));
     this.expressApp.use(bodyParser.json());
-    this.expressApp.use(cookieSession({
-      signed: false,
-      secure: false,
-    }));
+    this.expressApp.use(
+      cookieSession({
+        signed: false,
+        secure: false,
+      })
+    );
 
     this.expressApp.use(currentUser);
 
-    this.expressApp.get('/', (_req, res) => res.send('Hello, World!'));
+    this.expressApp.get("/", (_req, res) => res.send("Hello, World!"));
 
     // Routes for signup and signin
     this.expressApp.use(SignupRouter);
@@ -150,53 +151,49 @@ export default class Application {
     this.expressApp.use(requireAuth, DeleteCommentRoute);
 
     // Routes for actor
-    this.expressApp.use('/actor', ActorController);
+    this.expressApp.use("/actor", ActorController);
 
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('🚀 Starting server in development mode');
+    if (process.env.NODE_ENV !== "production") {
+      console.log("🚀 Starting server in development mode");
       // Serve GraphQL Playground on a different route like /playground
-      this.expressApp.get('/playground', expressPlayground({ endpoint: '/graphql' }));
+      this.expressApp.get(
+        "/playground",
+        expressPlayground({ endpoint: "/graphql" })
+      );
     }
-    
+
     // GraphQL schema and execution setup
     try {
       const schema = await buildSchema({
         resolvers: [ActorResolver],
       });
-    
+
       // Serve GraphQL queries and mutations via POST /graphql
       this.expressApp.post(
-        '/graphql',
+        "/graphql",
         bodyParser.json(),
         graphqlHTTP((req, res) => ({
           schema,
           context: { req, res, em: this.orm.em.fork() } as ReqContext,
           customFormatErrorFn: (error) => {
             return {
-              message: error.message || 'Internal Server Error',
+              message: error.message || "Internal Server Error",
               locations: error.locations,
               path: error.path,
             };
           },
-        })),
+        }))
       );
     } catch (error) {
-      console.error('📌 Could not connect to the database', error);
+      console.error("📌 Could not connect to the database", error);
       throw Error(String(error));
     }
 
-    this.expressApp.all('*', (_req, res, next) => {
-      const error = new Error('Route not found') as CustomError;
-      error.status = 404;
-      next(error);
+    this.expressApp.all("*", (_req, res, next) => {
+      next(new NotFoundError());
     });
 
-    this.expressApp.use((error: CustomError, _req: Request, res: Response, _next: NextFunction) => {
-      if(error.status) {
-        return res.status(error.status).json({ error: error.message });
-      }
-      res.status(error.status || 500).json({ error: error.message });
-    });
+    this.expressApp.use(errorHandler);
 
     this.expressApp.listen(port, () => {
       console.log(`Server is running at http://localhost:${port}`);

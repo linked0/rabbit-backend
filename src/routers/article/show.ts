@@ -1,5 +1,6 @@
 import { Request , Response, Router, NextFunction } from 'express';
 import Article from '../../model/article';
+import { BadRequestError } from '../../../common';
 
 const router = Router();
 
@@ -7,17 +8,13 @@ router.get('/api/article/show/:id', async (req: Request, res: Response, next: Ne
     const { id } = req.params;
 
     if(!id) {
-        const error = new Error('Article ID is required') as CustomError;
-        error.status = 400;
-        return next(error);
+        return next(new BadRequestError(('Article ID is required'));
     }
 
     const article = await Article.findOne({ _id: id });
 
     if(!article) {
-        const error = new Error('Article not found') as CustomError;
-        error.status = 404;
-        return next(error);
+        return next(new BadRequestError('Article not found'));
     }
 
     res.status(200).send(article);
